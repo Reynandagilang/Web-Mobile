@@ -44,3 +44,4 @@ export interface AppConfig {
   streakCount: number;
   lastStreakDate: string;
 }
+
