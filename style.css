@@ -5,29 +5,29 @@
    ========================================================================== */
 
 :root {
-  --bg-app: #0d1117;
-  --bg-card: #161b22;
-  --bg-elevated: #21262d;
-  --bg-input: #1a1f26;
+  --bg-app: #0f172a;
+  --bg-card: #1e293b;
+  --bg-elevated: #334155;
+  --bg-input: #0f172a;
 
-  --border-subtle: #30363d;
-  --border-strong: #484f58;
-  --border-focus: #388bfd;
+  --border-subtle: #334155;
+  --border-strong: #475569;
+  --border-focus: #3b82f6;
 
-  --text-primary: #f0f6fc;
-  --text-muted: #8b949e;
-  --text-dim: #6e7681;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
 
-  --accent-blue: #388bfd;
-  --accent-green: #2ea043;
-  --accent-amber: #d29922;
-  --accent-red: #f85149;
-  --accent-purple: #a371f7;
-  --accent-cyan: #58a6ff;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-purple: #8b5cf6;
+  --accent-cyan: #06b6d4;
 
-  --p1-color: #f85149;
-  --p2-color: #d29922;
-  --p3-color: #8b949e;
+  --p1-color: #ef4444;
+  --p2-color: #f59e0b;
+  --p3-color: #94a3b8;
 
   --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --safe-bottom: env(safe-area-inset-bottom, 12px);
@@ -36,18 +36,26 @@
 
 /* LIGHT THEME VARIABLES */
 [data-theme="light"] {
-  --bg-app: #f6f8fa;
+  --bg-app: #f1f5f9;
   --bg-card: #ffffff;
-  --bg-elevated: #f0f3f6;
+  --bg-elevated: #e2e8f0;
   --bg-input: #ffffff;
 
-  --border-subtle: #d0d7de;
-  --border-strong: #afb8c1;
-  --border-focus: #0969da;
+  --border-subtle: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border-focus: #2563eb;
 
-  --text-primary: #1f2328;
-  --text-muted: #656d76;
-  --text-dim: #8c959f;
+  --text-primary: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+
+  --accent-blue: #2563eb;
+  --accent-green: #059669;
+  --accent-amber: #d97706;
+  --accent-red: #dc2626;
+  --accent-purple: #7c3aed;
+  --accent-cyan: #0891b2;
+}
 
   --accent-blue: #0969da;
   --accent-green: #1a7f37;

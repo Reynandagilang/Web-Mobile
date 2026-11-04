@@ -220,6 +220,45 @@ function loadAllDatabase() {
     appState.tugas = rawTugas ? JSON.parse(rawTugas) : [];
     appState.plans = rawPlans ? JSON.parse(rawPlans) : [];
     appState.pomoCompletedToday = rawPomo ? parseInt(rawPomo, 10) : 0;
+
+    // Jika database masih kosong saat pertama kali buka, otomatis isi data berwarna
+    if (appState.tugas.length === 0 && appState.plans.length === 0) {
+      appState.tugas = [
+        { id: genUuid('task'), title: 'Selesaikan dokumen arsitektur web', notes: 'Fitur PWA offline & styling modern', priority: 'p1', category: 'kerja', recurring: 'none', date: getTodayIsoDate(), time: '13:00', hasAlarm: true, done: false },
+        { id: genUuid('task'), title: 'Lari santai sore 4 km', notes: 'Rute jogging taman kota', priority: 'p2', category: 'kesehatan', recurring: 'daily', date: getTodayIsoDate(), time: '17:00', hasAlarm: false, done: false },
+        { id: genUuid('task'), title: 'Bayar tagihan listrik & hosting', notes: 'Transfer via virtual account', priority: 'p1', category: 'keuangan', recurring: 'monthly', date: getTodayIsoDate(), time: '10:00', hasAlarm: true, done: true },
+        { id: genUuid('task'), title: 'Belajar konsep arsitektur state management', notes: 'Bab 4 buku sistem terdistribusi', priority: 'p3', category: 'belajar', recurring: 'none', date: getTodayIsoDate(), time: '20:00', hasAlarm: false, done: false }
+      ];
+
+      appState.plans = [
+        {
+          id: genUuid('plan'),
+          title: 'Peluncuran MVP Sistem Web Mobile Q4',
+          notes: 'Roadmap pengembangan dari desain hingga rilis live',
+          horizon: 'bulanan',
+          status: 'progress',
+          subtasks: [
+            { title: 'Rancang UI/UX & Palet Warna Kontras', done: true },
+            { title: 'Implementasi PWA Offline Engine', done: true },
+            { title: 'Deploy ke Production Netlify', done: false }
+          ]
+        },
+        {
+          id: genUuid('plan'),
+          title: 'Portofolio Investasi & Dana Darurat',
+          notes: 'Target alokasi tabungan masa depan',
+          horizon: 'q1',
+          status: 'progress',
+          subtasks: [
+            { title: 'Audit pengeluaran bulanan personal', done: true },
+            { title: 'Alokasikan 20% ke instrumen pasar uang', done: false }
+          ]
+        }
+      ];
+      localStorage.setItem(DB_TUGAS_KEY, JSON.stringify(appState.tugas));
+      localStorage.setItem(DB_PLANS_KEY, JSON.stringify(appState.plans));
+    }
+
     applyTheme(savedTheme);
     checkAndUpdateStreak();
   } catch (e) {
