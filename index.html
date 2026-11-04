@@ -3,16 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0d1117" />
+  <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>PlanOS — Planner & Reminder Enterprise</title>
+  <title>PlanOS — Planner, Reminder & Productivity Suite</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <div id="app">
+  <!-- ================= AUTH OVERLAY (LOGIN & DAFTAR) ================= -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h2>PlanOS Suite</h2>
+        <p>Aplikasi To-Do, Strategic Planning & Reminder</p>
+      </div>
+
+      <!-- AUTH TABS -->
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab-btn active">Masuk Akun</button>
+        <button id="tab-register" class="auth-tab-btn">Daftar Baru</button>
+      </div>
+
+      <!-- FORM LOGIN -->
+      <form id="form-login" class="auth-form-body">
+        <div class="auth-input-group">
+          <label>Username / Email</label>
+          <input type="text" id="login-username" placeholder="Masukkan username..." required autocomplete="username" />
+        </div>
+        <div class="auth-input-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Masukkan password..." required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-auth-primary">Masuk & Buka Planner</button>
+        <button type="button" id="btn-quick-guest" class="btn-auth-secondary">Masuk Mode Tamu (Demo Instan)</button>
+      </form>
+
+      <!-- FORM REGISTER -->
+      <form id="form-register" class="auth-form-body hidden">
+        <div class="auth-input-group">
+          <label>Nama Lengkap / Panggilan</label>
+          <input type="text" id="reg-fullname" placeholder="Contoh: Gilang" required />
+        </div>
+        <div class="auth-input-group">
+          <label>Username</label>
+          <input type="text" id="reg-username" placeholder="Pilih username unik..." required autocomplete="username" />
+        </div>
+        <div class="auth-input-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Buat password aman..." required autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn-auth-primary">Buat Akun & Mulai</button>
+      </form>
+
+      <div class="auth-footer-notice">
+        <span>🔒 Data Anda disimpan terisolasi khusus di profil akun Anda</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP SHELL ================= -->
+  <div id="app" class="hidden">
     <!-- APP TOP BAR -->
     <header class="app-header">
       <div class="header-top">
@@ -31,6 +86,15 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </button>
         </div>
+      </div>
+
+      <!-- ACTIVE USER PILL STRIP -->
+      <div class="user-session-bar">
+        <div class="user-info-chip">
+          <span class="user-avatar-dot"></span>
+          <span>Akun: <strong id="session-username-display">User</strong></span>
+        </div>
+        <button id="btn-logout" class="btn-logout-mini">Keluar</button>
       </div>
 
       <!-- SEARCH & QUICK FILTER TOOLBAR -->
@@ -68,13 +132,12 @@
       
       <!-- ================= 1. VIEW TUGAS ================= -->
       <section id="view-tugas" class="view-panel active">
-        <!-- PRODUCTIVITY HABIT STREAK BAR -->
         <div class="streak-banner">
           <div class="streak-left">
             <span class="streak-fire">🔥</span>
             <div>
               <div class="streak-title"><strong id="streak-count">1</strong> Hari Berturut-turut</div>
-              <div class="streak-sub">Konsistensi produktivitas harian Anda</div>
+              <div class="streak-sub">Konsistensi produktivitas akun Anda</div>
             </div>
           </div>
           <button id="btn-quick-clean-done" class="btn-clean-mini" title="Arsipkan Tugas Selesai">Bersihkan Selesai</button>
@@ -177,17 +240,17 @@
       <section id="view-storage" class="view-panel hidden">
         <div class="storage-card">
           <div class="storage-card-head">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#388bfd" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-            <h3>Pusat Data & Offline Storage</h3>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            <h3>Pusat Data Akun Pribadi</h3>
           </div>
           <p class="storage-desc">
-            Seluruh data tersimpan 100% lokal di browser HP Anda. Tidak memerlukan kuota atau server eksternal, privat, instan, dan aman.
+            Seluruh data tugas dan rencana Anda tersimpan terisolasi khusus di akun yang sedang login. Tanpa koneksi internet pun data tetap tersimpan aman di browser Anda.
           </p>
 
           <div class="storage-stat-block">
             <div class="storage-stat-row">
-              <span>Status Offline DB:</span>
-              <strong class="text-success">AKTIF & TERSINKRON</strong>
+              <span>Profil Pengguna Aktif:</span>
+              <strong id="storage-active-user-name" class="text-cyan">User</strong>
             </div>
             <div class="storage-stat-row">
               <span>Total Entitas Tersimpan:</span>
@@ -216,7 +279,7 @@
             </label>
 
             <button id="btn-load-sample" class="btn-action-outline">Muat Contoh Proyek Nyata</button>
-            <button id="btn-clear-database" class="btn-action-danger">Bersihkan & Reset Seluruh Data</button>
+            <button id="btn-clear-database" class="btn-action-danger">Bersihkan & Reset Data Akun Ini</button>
           </div>
         </div>
       </section>
@@ -391,6 +454,6 @@
 
   </div><!-- /#app -->
 
-  <script type="module" src="./app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

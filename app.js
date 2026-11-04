@@ -16,11 +16,8 @@
 'use strict';
 
 // ---- CONSTANTS & LOCAL DB KEYS ---------------------------
-const DB_TUGAS_KEY  = 'planos_db_tugas_v3';
-const DB_PLANS_KEY  = 'planos_db_plans_v3';
-const DB_POMO_KEY   = 'planos_db_pomo_v3';
-const DB_THEME_KEY  = 'planos_db_theme_v3';
-const DB_STREAK_KEY = 'planos_db_streak_v3';
+const DB_USERS_KEY   = 'planos_db_users_v4';
+const DB_SESSION_KEY = 'planos_db_session_v4';
 
 const CATEGORY_DEFINITIONS = {
   kerja: { label: '🏢 Kerja', color: '#388bfd' },
@@ -53,6 +50,7 @@ const appState = {
   searchQuery: '',
   soundEnabled: true,
   theme: 'dark', // 'dark' | 'light'
+  currentUser: null, // Logged in user profile
 
   // Entities
   tugas: [],
@@ -171,10 +169,94 @@ function toggleTheme() {
   triggerToast(next === 'light' ? 'Mode Terang Diaktifkan ☀️' : 'Mode Gelap Diaktifkan 🌙');
 }
 
+// ---- USER AUTH & MULTI-ACCOUNT STORAGE ENGINE ------------
+function getUserStoragePrefix() {
+  const user = appState.currentUser ? appState.currentUser.username : 'guest';
+  return `planos_usr_${user}_`;
+}
+
+function getAllRegisteredUsers() {
+  try {
+    const raw = localStorage.getItem(DB_USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveRegisteredUsers(users) {
+  localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+}
+
+function checkActiveSession() {
+  try {
+    const raw = localStorage.getItem(DB_SESSION_KEY);
+    if (raw) {
+      appState.currentUser = JSON.parse(raw);
+      showAppShell();
+      return true;
+    }
+  } catch(e) {}
+  showAuthScreen();
+  return false;
+}
+
+function performLogin(username, password) {
+  const users = getAllRegisteredUsers();
+  const found = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+  if (found) {
+    appState.currentUser = { username: found.username, fullname: found.fullname };
+    localStorage.setItem(DB_SESSION_KEY, JSON.stringify(appState.currentUser));
+    showAppShell();
+    loadAllDatabase();
+    triggerToast(`Selamat datang kembali, ${found.fullname}! 👋`);
+    return true;
+  }
+  return false;
+}
+
+function performRegister(fullname, username, password) {
+  const users = getAllRegisteredUsers();
+  if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+    return { success: false, message: 'Username sudah digunakan!' };
+  }
+  const newUser = { id: genUuid('usr'), fullname, username, password, createdAt: new Date().toISOString() };
+  users.push(newUser);
+  saveRegisteredUsers(users);
+
+  appState.currentUser = { username: newUser.username, fullname: newUser.fullname };
+  localStorage.setItem(DB_SESSION_KEY, JSON.stringify(appState.currentUser));
+  showAppShell();
+  loadAllDatabase();
+  triggerToast(`Akun berhasil dibuat! Selamat datang, ${fullname} 🎉`);
+  return { success: true };
+}
+
+function performLogout() {
+  localStorage.removeItem(DB_SESSION_KEY);
+  appState.currentUser = null;
+  showAuthScreen();
+  triggerToast('Anda telah keluar dari akun');
+}
+
+function showAuthScreen() {
+  $('auth-screen').classList.remove('hidden');
+  $('app').classList.add('hidden');
+}
+
+function showAppShell() {
+  $('auth-screen').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  const displayName = appState.currentUser ? appState.currentUser.fullname : 'Tamu (Guest)';
+  $('session-username-display').textContent = displayName;
+  $('storage-active-user-name').textContent = displayName;
+}
+
 // ---- HABIT STREAK ENGINE ---------------------------------
 function checkAndUpdateStreak() {
+  const prefix = getUserStoragePrefix();
   const today = getTodayIsoDate();
-  const raw = localStorage.getItem(DB_STREAK_KEY);
+  const raw = localStorage.getItem(prefix + 'streak');
   if (raw) {
     try {
       const data = JSON.parse(raw);
@@ -185,7 +267,6 @@ function checkAndUpdateStreak() {
       if (diffDays === 1) {
         // Berturut-turut
       } else if (diffDays > 1) {
-        // Terputus
         appState.streakCount = 1;
       }
     } catch(e) {}
@@ -197,11 +278,12 @@ function checkAndUpdateStreak() {
 }
 
 function registerStreakActivity() {
+  const prefix = getUserStoragePrefix();
   const today = getTodayIsoDate();
   if (appState.lastStreakDate !== today) {
     appState.streakCount++;
     appState.lastStreakDate = today;
-    localStorage.setItem(DB_STREAK_KEY, JSON.stringify({
+    localStorage.setItem(prefix + 'streak', JSON.stringify({
       count: appState.streakCount,
       lastDate: today
     }));
@@ -209,19 +291,22 @@ function registerStreakActivity() {
   }
 }
 
-// ---- LOCAL DATABASE STORAGE ------------------------------
+// ---- LOCAL DATABASE STORAGE (PER-USER ISOLATED) ----------
 function loadAllDatabase() {
+  if (!appState.currentUser) return;
+  const prefix = getUserStoragePrefix();
+
   try {
-    const rawTugas = localStorage.getItem(DB_TUGAS_KEY);
-    const rawPlans = localStorage.getItem(DB_PLANS_KEY);
-    const rawPomo = localStorage.getItem(DB_POMO_KEY);
-    const savedTheme = localStorage.getItem(DB_THEME_KEY) || 'dark';
+    const rawTugas = localStorage.getItem(prefix + 'tugas');
+    const rawPlans = localStorage.getItem(prefix + 'plans');
+    const rawPomo  = localStorage.getItem(prefix + 'pomo');
+    const savedTheme = localStorage.getItem(prefix + 'theme') || 'dark';
 
     appState.tugas = rawTugas ? JSON.parse(rawTugas) : [];
     appState.plans = rawPlans ? JSON.parse(rawPlans) : [];
     appState.pomoCompletedToday = rawPomo ? parseInt(rawPomo, 10) : 0;
 
-    // Jika database masih kosong saat pertama kali buka, otomatis isi data berwarna
+    // Jika akun baru pertama kali dibuka, berikan data sampel awal berwarna
     if (appState.tugas.length === 0 && appState.plans.length === 0) {
       appState.tugas = [
         { id: genUuid('task'), title: 'Selesaikan dokumen arsitektur web', notes: 'Fitur PWA offline & styling modern', priority: 'p1', category: 'kerja', recurring: 'none', date: getTodayIsoDate(), time: '13:00', hasAlarm: true, done: false },
@@ -255,12 +340,16 @@ function loadAllDatabase() {
           ]
         }
       ];
-      localStorage.setItem(DB_TUGAS_KEY, JSON.stringify(appState.tugas));
-      localStorage.setItem(DB_PLANS_KEY, JSON.stringify(appState.plans));
+      localStorage.setItem(prefix + 'tugas', JSON.stringify(appState.tugas));
+      localStorage.setItem(prefix + 'plans', JSON.stringify(appState.plans));
     }
 
     applyTheme(savedTheme);
     checkAndUpdateStreak();
+    renderSubFilterPills();
+    renderTugasStream();
+    renderPlanningStream();
+    refreshBadgesAndMetrics();
   } catch (e) {
     console.error('Failed reading database:', e);
     appState.tugas = [];
@@ -269,18 +358,21 @@ function loadAllDatabase() {
 }
 
 function commitTugas() {
-  localStorage.setItem(DB_TUGAS_KEY, JSON.stringify(appState.tugas));
+  const prefix = getUserStoragePrefix();
+  localStorage.setItem(prefix + 'tugas', JSON.stringify(appState.tugas));
   refreshBadgesAndMetrics();
   rebuildRemindersQueue();
 }
 
 function commitPlans() {
-  localStorage.setItem(DB_PLANS_KEY, JSON.stringify(appState.plans));
+  const prefix = getUserStoragePrefix();
+  localStorage.setItem(prefix + 'plans', JSON.stringify(appState.plans));
   refreshBadgesAndMetrics();
 }
 
 function commitPomodoroStats() {
-  localStorage.setItem(DB_POMO_KEY, appState.pomoCompletedToday.toString());
+  const prefix = getUserStoragePrefix();
+  localStorage.setItem(prefix + 'pomo', appState.pomoCompletedToday.toString());
   $('pomo-completed-count').textContent = appState.pomoCompletedToday;
 }
 
@@ -1273,12 +1365,57 @@ function initializeApp() {
     }
   });
 
-  // Render Init
-  renderSubFilterPills();
-  renderTugasStream();
-  renderPlanningStream();
-  refreshBadgesAndMetrics();
-  promptNotificationPermission();
+  // AUTH CONTROLS
+  $('tab-login').addEventListener('click', () => {
+    $('tab-login').classList.add('active');
+    $('tab-register').classList.remove('active');
+    $('form-login').classList.remove('hidden');
+    $('form-register').classList.add('hidden');
+  });
+
+  $('tab-register').addEventListener('click', () => {
+    $('tab-register').classList.add('active');
+    $('tab-login').classList.remove('active');
+    $('form-register').classList.remove('hidden');
+    $('form-login').classList.add('hidden');
+  });
+
+  $('form-login').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const u = $('login-username').value.trim();
+    const p = $('login-password').value.trim();
+    if (!performLogin(u, p)) {
+      alert('Username atau password salah! Jika belum punya akun, silakan klik tab "Daftar Baru" atau gunakan mode tamu.');
+    }
+  });
+
+  $('form-register').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = $('reg-fullname').value.trim();
+    const u = $('reg-username').value.trim();
+    const p = $('reg-password').value.trim();
+    const res = performRegister(f, u, p);
+    if (!res.success) {
+      alert(res.message);
+    }
+  });
+
+  $('btn-quick-guest').addEventListener('click', () => {
+    appState.currentUser = { username: 'guest', fullname: 'Pengguna Tamu' };
+    localStorage.setItem(DB_SESSION_KEY, JSON.stringify(appState.currentUser));
+    showAppShell();
+    loadAllDatabase();
+    triggerToast('Masuk sebagai Pengguna Tamu');
+  });
+
+  $('btn-logout').addEventListener('click', () => {
+    if (confirm('Keluar dari akun saat ini?')) {
+      performLogout();
+    }
+  });
+
+  // Check Session on Start
+  checkActiveSession();
 
   // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
